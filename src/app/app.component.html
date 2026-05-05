@@ -1,0 +1,42 @@
+<div class="hms-app">
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <span class="logo-icon">🏥</span>
+        <span class="logo-text">Hospital Management System</span>
+      </div>
+      <div class="env-badge" [ngClass]="envClass">{{ envName }}</div>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="welcome-card">
+      <h1>Welcome to HMS</h1>
+      <p>Your hospital management system is up and running successfully.</p>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-icon">👤</span>
+          <span class="stat-label">Patients</span>
+          <span class="stat-value">1,284</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">🩺</span>
+          <span class="stat-label">Doctors</span>
+          <span class="stat-value">48</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">🛏️</span>
+          <span class="stat-label">Beds Available</span>
+          <span class="stat-value">32</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">📋</span>
+          <span class="stat-label">Appointments Today</span>
+          <span class="stat-value">76</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<router-outlet />
