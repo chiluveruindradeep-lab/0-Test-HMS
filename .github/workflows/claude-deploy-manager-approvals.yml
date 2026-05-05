@@ -28,7 +28,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  GCP_BUCKET: doctorsproject-hms
+  GCP_BUCKET: claudedeployapp
   ARTIFACT_RETENTION_DAYS: 30
   MAX_ZIPS_PER_FOLDER: 5
   NODE_VERSION: '18'
