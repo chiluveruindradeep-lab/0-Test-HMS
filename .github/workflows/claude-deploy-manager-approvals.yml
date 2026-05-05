@@ -120,6 +120,8 @@ jobs:
         run: |
           npx ng build \
             --configuration=${{ needs.resolve-env.outputs.build_config }} \
+            --base-href=/${{ needs.resolve-env.outputs.gcp_folder }}/app/ \
+            --deploy-url=/${{ needs.resolve-env.outputs.gcp_folder }}/app/ \
             --output-path=dist/app
 
       - name: Verify build output
@@ -466,7 +468,7 @@ jobs:
           DEPLOY_PREFIX="${FOLDER}/app"
 
           mkdir -p "${EXTRACT_DIR}"
-          unzip -q "${{ needs.resolve-env.outputs.artifact_name }}" -d "$EXTRACT_DIR"
+          unzip -q "${ARTIFACT}" -d "$EXTRACT_DIR"
           echo "📂 Extracted files:"
           find "${EXTRACT_DIR}" -type f | head -20
 
