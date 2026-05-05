@@ -416,7 +416,7 @@ jobs:
           COUNT=$(gsutil ls "gs://${BUCKET}/${FOLDER}/" 2>/dev/null | wc -l || echo 0)
           if [ "$COUNT" -eq 0 ]; then
             echo "📁 Folder '${FOLDER}' is new — creating placeholder..."
-            echo "" | gsutil cp - "gs://${BUCKET}/${FOLDER}/.keep"
+            echo "Folder exists check skipped (GCS doesn't need folders)"
           else
             echo "📁 Folder '${FOLDER}' already exists."
           fi
@@ -466,14 +466,23 @@ jobs:
           DEPLOY_PREFIX="${FOLDER}/app"
 
           mkdir -p "${EXTRACT_DIR}"
-          unzip -q "${ARTIFACT}" -d "${EXTRACT_DIR}"
+          unzip -q "${{ needs.resolve-env.outputs.artifact_name }}" -d "$EXTRACT_DIR"
           echo "📂 Extracted files:"
           find "${EXTRACT_DIR}" -type f | head -20
+
+          # 🔥 Fix Angular SSR issue
+          if [ -d "$EXTRACT_DIR/app/browser" ]; then
+            SRC="$EXTRACT_DIR/app/browser/"
+          else
+            SRC="$EXTRACT_DIR/app/"
+          fi
+
+          echo "📂 Deploying from: $SRC"
 
           # Sync to GCS, setting correct cache headers for Angular
           gsutil -m rsync -r -d \
             -x ".*\.gz$" \
-            "${EXTRACT_DIR}/app/" \
+            "$SRC" \
             "gs://${BUCKET}/${DEPLOY_PREFIX}/"
 
           # Set cache-control headers
@@ -485,6 +494,11 @@ jobs:
             "gs://${BUCKET}/${DEPLOY_PREFIX}/index.html" 2>/dev/null || true
 
           echo "✅ Application files synced to gs://${BUCKET}/${DEPLOY_PREFIX}/"
+
+      - name: Verify uploaded files
+        run: |
+          echo "🔍 Verifying uploaded files..."
+          gsutil ls -r gs://${{ env.GCP_BUCKET }}/${{ needs.resolve-env.outputs.gcp_folder }}/app/
 
       # ── Invalidate CDN / update load balancer (if applicable) ──────────────
       - name: Invalidate CDN Cache (if backend bucket configured)
