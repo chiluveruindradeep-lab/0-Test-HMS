@@ -80,6 +80,18 @@ jobs:
               ;;
           esac
 
+          case "$ENV" in
+            cloud-dev)
+              URL="https://storage.googleapis.com/claudedeployapp/dev/app/index.html"
+              ;;
+            cloud-test)
+              URL="https://storage.googleapis.com/claudedeployapp/test/app/index.html"
+              ;;
+            cloud-prod)
+              URL="https://storage.googleapis.com/claudedeployapp/prod/app/index.html"
+              ;;
+          esac
+
           ARTIFACT="build_${LABEL}_${TS}_${VER}.zip"
 
           echo "branch=$BRANCH"           >> $GITHUB_OUTPUT
@@ -526,6 +538,22 @@ jobs:
       github.event.inputs.environment == 'cloud-prod' &&
       needs.deploy.result == 'success'
     steps:
+      - name: Format fix_notes into bullet list
+        id: format_notes
+        run: |
+          NOTES="${{ github.event.inputs.fix_notes }}"
+
+          FORMATTED=$(echo "$NOTES" \
+            | sed 's/[0-9]\+\.//g' \
+            | tr ';' '\n' \
+            | sed '/^$/d' \
+            | sed 's/^ *//;s/ *$//' \
+            | sed 's/.*/<li>&<\/li>/')
+
+          echo "formatted_notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$FORMATTED" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Send success email to Manager
         uses: dawidd6/action-send-mail@v3
         with:
@@ -592,8 +620,8 @@ jobs:
                       🛠️ Issues Fixed / Changes in This Release
                     </p>
 
-                    <ul style="margin:0; padding-left:20px; color:#333; font-size:14px; line-height:1.7;">
-                      <li>${{ github.event.inputs.fix_notes }}</li>
+                    <ul style="margin:0; padding-left:20px; color:#333; font-size:14px; line-height:1.8;">
+                      ${{ steps.format_notes.outputs.formatted_notes }}
                     </ul>
                   </div>
 
