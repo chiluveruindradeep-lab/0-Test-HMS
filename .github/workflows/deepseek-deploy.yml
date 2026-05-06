@@ -1,4 +1,4 @@
-name: 🚀 Enterprise Angular CI/CD Pipeline
+name: 🚀 Enterprise Angular CI/CD Pipeline (Angular Build + Artifact upload+ ZIP and upload to GCP and PUBLISH)
 
 on:
   workflow_dispatch:
