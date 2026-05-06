@@ -42,19 +42,19 @@ jobs:
             cloud-dev)
               echo "branch=dev" >> $GITHUB_OUTPUT
               echo "folder=cloud-dev" >> $GITHUB_OUTPUT
-              echo "url=https://dev.hospitalmanagementsystem.com" >> $GITHUB_OUTPUT
+              echo "url=https://storage.googleapis.com/${{ env.BUCKET_NAME }}/cloud-dev/app/index.html" >> $GITHUB_OUTPUT
               ;;
 
             cloud-test)
               echo "branch=test" >> $GITHUB_OUTPUT
               echo "folder=cloud-test" >> $GITHUB_OUTPUT
-              echo "url=https://test.hospitalmanagementsystem.com" >> $GITHUB_OUTPUT
+              echo "url=https://storage.googleapis.com/${{ env.BUCKET_NAME }}/cloud-test/app/index.html" >> $GITHUB_OUTPUT
               ;;
 
             cloud-prod)
               echo "branch=main" >> $GITHUB_OUTPUT
               echo "folder=cloud-prod" >> $GITHUB_OUTPUT
-              echo "url=https://hospitalmanagementsystem.com" >> $GITHUB_OUTPUT
+              echo "url=https://storage.googleapis.com/${{ env.BUCKET_NAME }}/cloud-prod/app/index.html" >> $GITHUB_OUTPUT
               ;;
           esac
 
@@ -196,10 +196,10 @@ jobs:
 # =========================
       - name: Health Check
         run: |
-          URL="${{ needs.resolve.outputs.url }}"
+            URL="https://storage.googleapis.com/${{ env.BUCKET_NAME }}/${{ needs.resolve.outputs.folder }}/app/index.html"
 
-          echo "Checking $URL"
-          curl -f $URL || exit 1
+            echo "Checking $URL"
+            curl -f $URL || exit 1
 
 # =========================
 # 7️⃣ CLEANUP OLD BUILDS (KEEP LAST 5)
