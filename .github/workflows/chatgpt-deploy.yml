@@ -1,4 +1,4 @@
-name: 🚀 HospitalManagementSystem - Production CI/CD
+name: 🚀 HospitalManagementSystem - Enterprise CI/CD
 
 on:
   workflow_dispatch:
@@ -27,13 +27,16 @@ jobs:
   resolve:
     runs-on: ubuntu-latest
     outputs:
-      branch: ${{ steps.out.outputs.branch }}
-      folder: ${{ steps.out.outputs.folder }}
-      url: ${{ steps.out.outputs.url }}
+      branch: ${{ steps.set.outputs.branch }}
+      folder: ${{ steps.set.outputs.folder }}
+      versioned_path: ${{ steps.set.outputs.versioned_path }}
+      url: ${{ steps.set.outputs.url }}
 
     steps:
-      - id: out
+      - id: set
         run: |
+          TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+
           case "${{ github.event.inputs.environment }}" in
 
             cloud-dev)
@@ -72,10 +75,15 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
+
+      # 🔥 Cache npm (enterprise speed optimization)
+      - uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('package-lock.json') }}
 
       - run: npm ci
-
       - run: npm run build -- --configuration production
 
 # =========================
@@ -94,14 +102,13 @@ jobs:
 
           echo "name=$ZIP_NAME" >> $GITHUB_OUTPUT
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.zip.outputs.name }}
           path: ${{ steps.zip.outputs.name }}
 
 # =========================
-# 4️⃣ TEST APPROVAL EMAIL (LEAD)
+# 4️⃣ TEST APPROVAL (LEAD)
 # =========================
   test-approval:
     needs: [resolve, build]
@@ -109,46 +116,49 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Email Lead for Approval
+      - name: Notify Lead
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
           server_port: 587
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
-          subject: "🟡 TEST Deployment Approval Required - HMS"
+          subject: "🟡 TEST Approval Required - HMS"
           to: ${{ secrets.LEAD_EMAIL }}
           from: CI/CD Pipeline
           body: |
-            TEST Deployment Request
+            Test Deployment Request
 
             Version: ${{ github.event.inputs.version }}
             Branch: test
 
-            Please review and approve for deployment.
+            Please review before deployment.
 
 # =========================
-# 5️⃣ PROD APPROVAL GATE (HARD STOP)
+# 5️⃣ PROD APPROVAL (MANAGER GATE)
 # =========================
   prod-approval:
     needs: [resolve, build]
     if: github.event.inputs.environment == 'cloud-prod'
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
+    environment:
+      name: cloud-prod
 
     steps:
       - run: echo "Waiting for Manager Approval..."
 
 # =========================
-# 6️⃣ DEPLOY TO GCP
+# 6️⃣ DEPLOY TO GCP (BLUE/GREEN READY)
 # =========================
   deploy:
     needs: [resolve, build]
     runs-on: ubuntu-latest
 
+    outputs:
+      deploy_url: ${{ needs.resolve.outputs.url }}
+
     steps:
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: ${{ needs.build.outputs.artifact_name }}
 
@@ -158,34 +168,53 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v2
 
-      - name: Upload ZIP to GCS
+# =========================
+# 📦 Upload Versioned Release
+# =========================
+      - name: Upload Release to GCS
         run: |
-          gsutil cp *.zip gs://$BUCKET_NAME/${{ needs.resolve.outputs.folder }}/
+          FOLDER=${{ needs.resolve.outputs.folder }}
+          VERSION=${{ github.event.inputs.version }}
+
+          RELEASE_PATH="releases/$VERSION"
+
+          gsutil cp *.zip gs://$BUCKET_NAME/$FOLDER/$RELEASE_PATH/
 
 # =========================
-# 7️⃣ RETENTION POLICY (LAST 5 ONLY)
+# 🔄 BLUE/GREEN DEPLOY SWITCH
 # =========================
-      - name: Cleanup Old Builds
+      - name: Deploy to Live (Green)
+        run: |
+          FOLDER=${{ needs.resolve.outputs.folder }}
+          VERSION=${{ github.event.inputs.version }}
+
+          gsutil -m rsync -r gs://$BUCKET_NAME/$FOLDER/releases/$VERSION/ \
+            gs://$BUCKET_NAME/$FOLDER/live/
+
+# =========================
+# 🧪 HEALTH CHECK
+# =========================
+      - name: Health Check
+        run: |
+          URL="${{ needs.resolve.outputs.url }}"
+
+          echo "Checking $URL"
+          curl -f $URL || exit 1
+
+# =========================
+# 7️⃣ CLEANUP OLD BUILDS (KEEP LAST 5)
+# =========================
+      - name: Retention Policy
         run: |
           FOLDER=${{ needs.resolve.outputs.folder }}
 
-          gsutil ls gs://$BUCKET_NAME/$FOLDER/ \
+          gsutil ls gs://$BUCKET_NAME/$FOLDER/releases/ \
           | sort -r \
           | tail -n +6 \
           | xargs -r gsutil rm
 
 # =========================
-# 8️⃣ EXTRACT & DEPLOY APP
-# =========================
-      - name: Extract & Sync
-        run: |
-          mkdir app
-          unzip *.zip -d app
-
-          gsutil -m rsync -r app gs://$BUCKET_NAME/${{ needs.resolve.outputs.folder }}/app/
-
-# =========================
-# 9️⃣ FINAL NOTIFICATIONS
+# 8️⃣ NOTIFICATIONS
 # =========================
   notify:
     needs: [resolve, deploy]
@@ -205,10 +234,12 @@ jobs:
           to: ${{ secrets.MANAGER_EMAIL }}
           from: CI/CD Pipeline
           body: |
-            Deployment Successful 🚀
+            🚀 Deployment Successful
 
             Environment: ${{ github.event.inputs.environment }}
-            URL: ${{ needs.resolve.outputs.url }}
+            Version: ${{ github.event.inputs.version }}
+
+            Live URL: ${{ needs.resolve.outputs.url }}
 
       - name: Failure Email
         if: failure()
@@ -222,8 +253,8 @@ jobs:
           to: ${{ secrets.MANAGER_EMAIL }}
           from: CI/CD Pipeline
           body: |
-            Deployment Failed ❌
+            ❌ Deployment Failed
 
             Environment: ${{ github.event.inputs.environment }}
 
-            Please check logs for details.
+            Check GitHub logs for details.
