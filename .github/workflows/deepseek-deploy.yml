@@ -147,9 +147,14 @@ jobs:
           NAME="build_${ENV}_${TS}_v${VERSION}.zip"
           echo "zip_name=$NAME" >> $GITHUB_OUTPUT
 
-          cd dist
-          zip -r ../$NAME .
-          cd ..
+          # Detect Angular build folder automatically
+          BUILD_PATH=$(find dist -type d -name browser | head -n 1)
+
+          echo "Using build path: $BUILD_PATH"
+
+          cd $BUILD_PATH
+          zip -r ../../../$NAME .
+          cd -s
 
       - uses: actions/upload-artifact@v4
         with:
@@ -243,7 +248,7 @@ jobs:
     needs:
       - build
       - lead-approval
-      - manager-approval
+
     if: always() && (github.event.inputs.environment == 'cloud-dev' || needs.lead-approval.result == 'success')
     runs-on: ubuntu-latest
 
@@ -261,6 +266,9 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v3
 
+      - name: Check ZIP content
+        run: unzip -l ${{ needs.build.outputs.zip_name }}
+
       - name: Upload ZIP
         run: |
           ENV=${{ github.event.inputs.environment }}
@@ -276,10 +284,19 @@ jobs:
             if [ $COUNT -gt 5 ]; then gsutil rm $f; fi
           done
 
-      - name: Extract
+      - name: Extract ZIP
         run: |
           unzip ${{ needs.build.outputs.zip_name }} -d deploy
-          gsutil -m rsync -r -d deploy gs://${{ env.BUCKET_NAME }}/$ENV/app/
+
+      - name: Debug extracted files
+        run: |
+          echo "Files inside deploy:"
+          ls -R deploy
+
+      - name: Deploy to GCS
+        run: |
+          ENV=${{ github.event.inputs.environment }}
+          gsutil -m rsync -r deploy gs://${{ env.BUCKET_NAME }}/$ENV/app/
 
       - name: Set Website
         run: |
