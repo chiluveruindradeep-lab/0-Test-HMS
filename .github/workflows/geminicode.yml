@@ -341,7 +341,7 @@ jobs:
       - approval
       - build
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
+    #environment: ${{ github.event.inputs.environment }}
 
     outputs:
       deploy_url: ${{ steps.output_url.outputs.deploy_url }}
@@ -392,7 +392,7 @@ jobs:
 
       - name: Set Website Config
         run: |
-          gsutil web set -m index.html -e index.html gs://${{ env.BUCKET_NAME }}/${{ github.event.inputs.environment }}/app
+          gsutil web set -m index.html -e index.html gs://${{ env.BUCKET_NAME }}
 
       - name: Output URL
         id: output_url
