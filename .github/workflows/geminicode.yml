@@ -215,7 +215,7 @@ jobs:
       - name: Upload Artifact to GitHub
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.create_zip.outputs.zip_name }}
+          name: build-output
           path: ${{ steps.create_zip.outputs.zip_name }}
           retention-days: 1
 
@@ -434,7 +434,9 @@ jobs:
       - name: Upload ZIP to GCS
         run: |
           ENV=${{ github.event.inputs.environment }}
-          gsutil cp $ZIP_NAME gs://${{ env.BUCKET_NAME }}/$ENV/
+          ls -R .
+
+          gsutil cp build_*.zip gs://claudedeployapp/$ENV/
 
       - name: Keep Only Last 5 ZIP Builds
         run: |
