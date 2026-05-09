@@ -90,8 +90,6 @@ jobs:
         run: |
           npm install
           npm run build -- --configuration production
-           echo "=== AFTER BUILD ==="
-           ls -R . || true
 
       # FIX: avoid duplicate artifact overwrite confusion
       - name: Upload Build Artifact (FIXED)
@@ -197,7 +195,8 @@ jobs:
       - name: Download Build Artifact
         uses: actions/download-artifact@v4
         with:
-          name: build-output-temp
+          name: build-output
+          path: dist
 
       - name: Create ZIP Artifact (Flattened)
         id: create_zip
