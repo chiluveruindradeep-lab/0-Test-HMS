@@ -417,10 +417,16 @@ jobs:
         with:
           name: build-output
 
-      - name: Extract Artifact
+      - name: Extract Artifact (FIXED)
         run: |
           unzip "${{ needs.build.outputs.zip_name }}"
+    
+          # Move correct folder to deploy root
+          rm -rf deploy
           mv package/app deploy
+
+          echo "✅ Final deploy structure:"
+          ls -R deploy
 
       - name: Authenticate GCP
         uses: google-github-actions/auth@v3
@@ -462,9 +468,16 @@ jobs:
         with:
           name: build-output
 
-      - name: Extract Artifact
+      - name: Extract Artifact (FIXED)
         run: |
-          unzip "${{ needs.build.outputs.zip_name }}" -d deploy
+          unzip "${{ needs.build.outputs.zip_name }}"
+    
+          # Move correct folder to deploy root
+          rm -rf deploy
+          mv package/app deploy
+
+          echo "✅ Final deploy structure:"
+          ls -R deploy
 
       - name: Verify Files
         run: |
