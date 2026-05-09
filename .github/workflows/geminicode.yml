@@ -90,6 +90,17 @@ jobs:
              ls
              ls dist || echo "DIST NOT CREATED"
 
+       # ✅ STEP 1: DEBUG (ADD HERE)
+      - name: Debug Build Output
+        run: ls -R dist || echo "DIST NOT FOUND"
+
+       # ✅ STEP 2: UPLOAD ARTIFACT (MANDATORY)
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: dist/
+
       - name: Generate Timestamp
         id: time
         run: echo "timestamp=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_OUTPUT
@@ -375,15 +386,21 @@ jobs:
 
     steps:
 
-      - name: Debug Workspace
-        run: |
-          echo "=== ROOT STRUCTURE ==="
-          ls -R .
-
-      - name: Download Artifact
+      # ✅ STEP 3: DOWNLOAD ARTIFACT (FIRST STEP)
+      - name: Download Build Artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.build.outputs.zip_name }}
+          name: build-output
+
+      # (optional but recommended)
+      - name: Debug Workspace
+        run: ls -R .
+
+      # THEN your ZIP / deploy logic
+      - name: Create ZIP
+        run: |
+          echo "Using downloaded dist folder"
+          ls dist
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v3
