@@ -409,7 +409,6 @@ jobs:
       - name: Create ZIP
         run: |
           echo "Using downloaded dist folder"
-          ls dist
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v3
@@ -433,13 +432,32 @@ jobs:
             | tail -n +6 \
             | xargs -r gsutil rm
 
+      - name: Detect Angular Build Folder
+        id: detect
+        run: |
+          echo "Searching for Angular build output..."
+
+          # Find index.html safely
+          BUILD_DIR=$(find . -type f -name "index.html" | grep -v "node_modules" | head -n 1 | xargs dirname)
+
+          echo "FOUND BUILD DIR: $BUILD_DIR"
+
+          if [ -z "$BUILD_DIR" ]; then
+            echo "❌ No index.html found. Build likely failed."
+            exit 1
+          fi
+
+          echo "build_dir=$BUILD_DIR" >> $GITHUB_OUTPUT
+
       - name: Deploy to GCS
         run: |
           ENV=${{ github.event.inputs.environment }}
 
-          BUILD_DIR="app/browser"
+          BUILD_DIR="${{ steps.detect.outputs.build_dir }}"
 
           echo "Deploying from: $BUILD_DIR"
+
+          ls -R "$BUILD_DIR"
 
           gsutil -m rsync -r -d "$BUILD_DIR/" gs://${{ env.BUCKET_NAME }}/$ENV/app/
 
