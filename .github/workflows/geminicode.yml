@@ -371,12 +371,15 @@ jobs:
       - name: Keep Only Last 5 Files
         run: |
           ENV=${{ github.event.inputs.environment }}
-          FILES=$(gsutil ls gs://${{ env.BUCKET_NAME }}/$ENV/ | sort -r)
+          PREFIX="gs://${{ env.BUCKET_NAME }}/$ENV/app/"
+
+          FILES=$(gsutil ls $PREFIX | sort -r || true)
+
           COUNT=0
           for FILE in $FILES; do
             COUNT=$((COUNT+1))
             if [ $COUNT -gt 5 ]; then
-              gsutil rm $FILE
+              gsutil rm "$FILE" || true
             fi
           done
 
