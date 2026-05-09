@@ -375,7 +375,10 @@ jobs:
 
     if: |
       github.event.inputs.environment == 'cloud-dev' ||
-      (github.event.inputs.environment == 'cloud-test' && needs.lead-approval.result == 'success')
+      (
+       github.event.inputs.environment == 'cloud-test' &&
+       needs.lead-approval.result == 'success'
+      )
 
     runs-on: ubuntu-latest
 
