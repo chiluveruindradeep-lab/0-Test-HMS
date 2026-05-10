@@ -12,6 +12,8 @@ on:
           - cloud-test
           - cloud-prod
 
+        default: cloud-prod
+
 env:
   PROJECT_NAME: HospitalManagementSystem
   BUCKET_NAME: claudedeployapp
