@@ -430,7 +430,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: build-output
+          name: ${{ needs.build.outputs.zip_name }}
 
       - name: Extract ZIP (FIXED)
         run: |
@@ -471,7 +471,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: build-output
+          name: ${{ needs.build.outputs.zip_name }}
 
       - name: Extract ZIP
         run: |
