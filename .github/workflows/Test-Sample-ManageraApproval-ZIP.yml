@@ -348,7 +348,6 @@ jobs:
           password: ${{ secrets.SMTP_PASSWORD }}
           subject: Manager Approval Required | Production Deployment | ${{ github.repository }}
           to: ${{ env.MANAGER_EMAIL }}
-          cc: ${{ env.TEAM_CC }}
           from: ${{ secrets.SMTP_USERNAME }}
           html_body: |
             <html>
@@ -559,7 +558,6 @@ jobs:
           password: ${{ secrets.SMTP_PASSWORD }}
           subject: Production Deployment Successful | ${{ github.repository }}
           to: ${{ env.MANAGER_EMAIL }}
-          cc: ${{ env.TEAM_CC }}
           from: ${{ secrets.SMTP_USERNAME }}
           html_body: |
             <html>
@@ -618,7 +616,6 @@ jobs:
           password: ${{ secrets.SMTP_PASSWORD }}
           subject: Production Deployment Failed | ${{ github.repository }}
           to: ${{ env.MANAGER_EMAIL }}
-          cc: ${{ env.TEAM_CC }}
           from: ${{ secrets.SMTP_USERNAME }}
           html_body: |
             <html>
