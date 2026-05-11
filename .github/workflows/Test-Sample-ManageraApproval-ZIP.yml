@@ -255,6 +255,7 @@ jobs:
   lead-mail:
     name: Send Lead Approval Mail
     needs: build
+    if: github.event.inputs.environment != 'cloud-dev'
     runs-on: ubuntu-latest
 
     steps:
