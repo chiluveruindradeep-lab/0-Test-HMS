@@ -1,4 +1,4 @@
-name: NEW GEMINI - CI/CD Pipeline (Fixed Angular + GCS + Approvals)
+name: TESTING - CI/CD Pipeline (Fixed Angular + GCS + Approvals)
 
 on:
   workflow_dispatch:
@@ -28,10 +28,10 @@ permissions:
   contents: read
   id-token: write
 
+jobs:
 # -------------------------------------------------------
 # JOB 1 - SET ENVIRONMENT + BRANCH
 # -------------------------------------------------------
-jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
@@ -47,7 +47,7 @@ jobs:
           else
             echo "branch=main" >> $GITHUB_OUTPUT
           fi
-
+    
 # -------------------------------------------------------
 # JOB 2 - BUILD + PACKAGE (FIXED)
 # -------------------------------------------------------
@@ -89,8 +89,21 @@ jobs:
 # -------------------------------------------------
 # JOB 5 - BUILD
 # -------------------------------------------------
+      - name: Map Environment to Angular Config
+        id: envmap
+        run: |
+          ENV="${{ github.event.inputs.environment }}"
+
+          if [[ "$ENV" == "cloud-dev" ]]; then
+            echo "cfg=development" >> $GITHUB_OUTPUT
+          elif [[ "$ENV" == "cloud-test" ]]; then
+            echo "cfg=staging" >> $GITHUB_OUTPUT
+          else
+            echo "cfg=production" >> $GITHUB_OUTPUT
+          fi
+   
       - name: Build Angular
-        run: npm run build -- --configuration=${{ github.event.inputs.environment }}
+        run: npm run build -- --configuration=${{ steps.envmap.outputs.cfg }}
 
 # -------------------------------------------------
 # JOB 6 - DEBUG
