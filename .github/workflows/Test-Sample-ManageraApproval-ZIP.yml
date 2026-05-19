@@ -275,13 +275,13 @@ jobs:
           $ErrorActionPreference = "Stop"
 
           if (-not (Test-Path $env:TARGET_PATH)) {
-            throw "❌ Network path unavailable: $env:TARGET_PATH"
+            throw "Network path unavailable: $env:TARGET_PATH"
           }
 
           $zip = "$env:ZIP_PATH"
 
           if (-not (Test-Path $zip)) {
-            throw "❌ ZIP file missing: $zip"
+            throw "ZIP file missing: $zip"
           }
 
           $newFileName = Split-Path $zip -Leaf
@@ -290,26 +290,29 @@ jobs:
           $success = $false
 
           for ($i = 1; $i -le 3; $i++) {
+
             try {
+
               Copy-Item $zip $dest -Force -ErrorAction Stop
 
               if (Test-Path $dest) {
-                Write-Host "✔ Copy success on attempt $i"
+                Write-Host "Copy success on attempt $i"
                 $success = $true
                 break
               }
 
-            } catch {
+            }
+            catch {
               Write-Warning "Attempt $i failed: $($_.Exception.Message)"
               Start-Sleep 5
             }
           }
 
           if (-not $success) {
-            throw "❌ Network copy failed after 3 attempts"
+            throw "Network copy failed after 3 attempts"
           }
 
-          echo "REMOTE_FILE=$dest" >> $env:GITHUB_ENV
+          "REMOTE_FILE=$dest" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       # =============================================
       # 🌐 STEP 7 — Final Integrity Check
