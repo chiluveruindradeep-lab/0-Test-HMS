@@ -243,27 +243,29 @@ jobs:
           $path = $env:TARGET_PATH
 
           for ($i = 1; $i -le 5; $i++) {
+
             try {
+
               if (-not (Test-Path $path)) {
                 New-Item -ItemType Directory -Path $path -Force | Out-Null
-              }
-
-              if (Test-Path $path) {
-                Write-Host "✔ Directory ready: $path"
-                break
-              }
-
-            } catch {
-              Write-Warning "Attempt $i failed creating directory: $($_.Exception.Message)"
             }
 
-            Start-Sleep 5
-
-            if ($i -eq 5) {
-              throw "❌ Failed to create network directory after 5 attempts"
+            if (Test-Path $path) {
+              Write-Host "Directory ready: $path"
+              break
             }
+
+          }
+          catch {
+            Write-Warning "Attempt $i failed creating directory: $($_.Exception.Message)"
           }
 
+          Start-Sleep 5
+
+          if ($i -eq 5) {
+            throw "Failed to create network directory after 5 attempts"
+          }
+          }
       # =============================================
       # 🌐 STEP 6 — Copy ZIP to network share
       # =============================================
