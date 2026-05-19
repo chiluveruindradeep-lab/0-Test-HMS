@@ -329,7 +329,7 @@ jobs:
           Write-Host "Remote: $($remote.Hash)"
 
           if ($local.Hash -ne $remote.Hash) {
-            throw "❌ Deployment corrupted — hash mismatch"
+            throw "Deployment corrupted - hash mismatch"
           }
 
-          Write-Host "✔ Deployment successful: $env:REMOTE_FILE"
+          Write-Host "Deployment successful: $env:REMOTE_FILE"
