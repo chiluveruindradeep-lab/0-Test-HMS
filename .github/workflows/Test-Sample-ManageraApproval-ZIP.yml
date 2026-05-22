@@ -95,6 +95,35 @@ jobs:
         env:
           NODE_OPTIONS: --max_old_space_size=6144
 
+      # -------------------------------------------------
+      # UPDATE BASE HREF IN INDEX.HTML
+      # -------------------------------------------------
+      - name: Update base href
+        shell: bash
+        run: |
+
+          ENV="${{ github.event.inputs.env_target }}"
+
+          if [ "$ENV" = "cloud-dev" ]; then
+            BASE_HREF="/ClinicalsDev/"
+          elif [ "$ENV" = "cloud-test" ]; then
+            BASE_HREF="/ClinicalsT/"
+          elif [ "$ENV" = "cloud-prod" ]; then
+            BASE_HREF="/Clinicals/"
+          else
+            echo "Unknown environment"
+            exit 1
+          fi
+
+          echo "Using BASE_HREF=$BASE_HREF"
+
+          INDEX_FILE=$(find dist -name index.html | head -n 1)
+
+          sed -i "s|<base href=\"/\">|<base href=\"$BASE_HREF\">|g" "$INDEX_FILE"
+
+          echo "Updated index.html:"
+          cat "$INDEX_FILE"
+
       # ✅ Fix: correct dist folder
       - name: Prepare build folder
         run: |
